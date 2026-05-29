@@ -31,7 +31,13 @@ export default {
 		const supportedDomains = env.CORS_ALLOW_ORIGIN?.split(',').map(d => d.trim());
 		const corsHeaders: Record<string, string> = {
 			'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+			// Reflect the headers the browser asks for in preflight. The Solana
+			// clients (@solana/web3.js, @solana/kit) send extra headers like
+			// `solana-client`; echoing the requested set avoids preflight failures
+			// on any header not in a hardcoded list.
+			'Access-Control-Allow-Headers':
+				request.headers.get('Access-Control-Request-Headers') ??
+				'Content-Type, Authorization, solana-client',
 		};
 
 		if (supportedDomains) {
@@ -61,7 +67,7 @@ export default {
 
 async function handleWebSocket(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
 	const { search } = new URL(request.url);
-	const upstreamUrl = `wss://mainnet.helius-rpc.com${search ? `${search}&` : '?'}api-key=${env.HELIUS_API_KEY}`;
+	const upstreamUrl = `wss://devnet.helius-rpc.com${search ? `${search}&` : '?'}api-key=${env.HELIUS_API_KEY}`;
 
 	// Extract subprotocol
 	const clientProtocols = request.headers.get('Sec-WebSocket-Protocol');
@@ -231,7 +237,7 @@ async function handleRPC(request: Request, env: Env, corsHeaders: Record<string,
 		const payload = await request.text();
 
 		// Determine target endpoint
-		const targetHost = pathname === '/' ? 'mainnet.helius-rpc.com' : 'api.helius.xyz';
+		const targetHost = pathname === '/' ? 'devnet.helius-rpc.com' : 'api.helius.xyz';
 		const targetUrl = `https://${targetHost}${pathname}?api-key=${env.HELIUS_API_KEY}${search ? `&${search.slice(1)}` : ''}`;
 
 		const proxyRequest = new Request(targetUrl, {

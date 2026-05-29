@@ -1,3 +1,9 @@
 name = "rpc-proxy"
 main = "./src/index.ts"
 compatibility_date = "2025-09-23"
+
+# Browser origins allowed to use this proxy (CORS). Not a secret — safe to commit.
+# HELIUS_API_KEY is a SECRET: set it with `wrangler secret put HELIUS_API_KEY`
+# or in the dashboard. Never put it here.
+[vars]
+CORS_ALLOW_ORIGIN = "http://localhost:3000,https://dev.updown.now"
