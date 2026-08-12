@@ -1,7 +1,12 @@
 interface Env {
 	HELIUS_API_KEY: string;
 	CORS_ALLOW_ORIGIN?: string;
+	// Helius cluster subdomain: "mainnet" or "devnet". Defaults to mainnet.
+	HELIUS_NETWORK?: string;
 }
+
+const heliusRpcHost = (env: Env): string =>
+	`${env.HELIUS_NETWORK === 'devnet' ? 'devnet' : 'mainnet'}.helius-rpc.com`;
 
 // Configuration - adjust as needed
 const BUFFER_TIMEOUT_MS = 10000;
@@ -67,7 +72,7 @@ export default {
 
 async function handleWebSocket(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
 	const { search } = new URL(request.url);
-	const upstreamUrl = `wss://devnet.helius-rpc.com${search ? `${search}&` : '?'}api-key=${env.HELIUS_API_KEY}`;
+	const upstreamUrl = `wss://${heliusRpcHost(env)}${search ? `${search}&` : '?'}api-key=${env.HELIUS_API_KEY}`;
 
 	// Extract subprotocol
 	const clientProtocols = request.headers.get('Sec-WebSocket-Protocol');
@@ -237,7 +242,7 @@ async function handleRPC(request: Request, env: Env, corsHeaders: Record<string,
 		const payload = await request.text();
 
 		// Determine target endpoint
-		const targetHost = pathname === '/' ? 'devnet.helius-rpc.com' : 'api.helius.xyz';
+		const targetHost = pathname === '/' ? heliusRpcHost(env) : 'api.helius.xyz';
 		const targetUrl = `https://${targetHost}${pathname}?api-key=${env.HELIUS_API_KEY}${search ? `&${search.slice(1)}` : ''}`;
 
 		const proxyRequest = new Request(targetUrl, {
